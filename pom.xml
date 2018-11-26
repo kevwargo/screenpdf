@@ -11,28 +11,18 @@
   <build>
 	<plugins>
       <plugin>
-      <artifactId>maven-assembly-plugin</artifactId>
-      <configuration>
-        <archive>
-          <manifest>
-            <mainClass>org.kevwargo.screenpdf.Main</mainClass>
-          </manifest>
-        </archive>
-        <descriptorRefs>
-          <descriptorRef>jar-with-dependencies</descriptorRef>
-        </descriptorRefs>
-      </configuration>
-    </plugin>
-	  <plugin>
-		<artifactId>maven-compiler-plugin</artifactId>
-		<version>3.1</version>
-		<configuration>
-		  <source>1.7</source>
-		  <target>1.7</target>
-		  <fork>true</fork>
-		  <executable>C:\Program Files\Java\jdk1.8.0_191\bin\javac</executable>
-		</configuration>
-	  </plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifest>
+              <mainClass>org.kevwargo.screenpdf.Main</mainClass>
+            </manifest>
+          </archive>
+          <descriptorRefs>
+            <descriptorRef>jar-with-dependencies</descriptorRef>
+          </descriptorRefs>
+        </configuration>
+      </plugin>
 	</plugins>
   </build>
 
@@ -49,19 +39,19 @@
     </dependency>
 
     <dependency>
-        <groupId>com.itextpdf</groupId>
-        <artifactId>kernel</artifactId>
-        <version>${itext.version}</version>
+      <groupId>com.itextpdf</groupId>
+      <artifactId>kernel</artifactId>
+      <version>${itext.version}</version>
     </dependency>
     <dependency>
-        <groupId>com.itextpdf</groupId>
-        <artifactId>io</artifactId>
-        <version>${itext.version}</version>
+      <groupId>com.itextpdf</groupId>
+      <artifactId>io</artifactId>
+      <version>${itext.version}</version>
     </dependency>
     <dependency>
-        <groupId>com.itextpdf</groupId>
-        <artifactId>layout</artifactId>
-        <version>${itext.version}</version>
+      <groupId>com.itextpdf</groupId>
+      <artifactId>layout</artifactId>
+      <version>${itext.version}</version>
     </dependency>
 
   </dependencies>
