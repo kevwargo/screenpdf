@@ -1,0 +1,68 @@
+<project>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.kevwargo.screenpdf</groupId>
+  <artifactId>screenpdf</artifactId>
+  <version>1</version>
+
+  <properties>
+    <itext.version>7.1.2</itext.version>
+  </properties>
+
+  <build>
+	<plugins>
+      <plugin>
+      <artifactId>maven-assembly-plugin</artifactId>
+      <configuration>
+        <archive>
+          <manifest>
+            <mainClass>org.kevwargo.screenpdf.Main</mainClass>
+          </manifest>
+        </archive>
+        <descriptorRefs>
+          <descriptorRef>jar-with-dependencies</descriptorRef>
+        </descriptorRefs>
+      </configuration>
+    </plugin>
+	  <plugin>
+		<artifactId>maven-compiler-plugin</artifactId>
+		<version>3.1</version>
+		<configuration>
+		  <source>1.7</source>
+		  <target>1.7</target>
+		  <fork>true</fork>
+		  <executable>C:\Program Files\Java\jdk1.8.0_191\bin\javac</executable>
+		</configuration>
+	  </plugin>
+	</plugins>
+  </build>
+
+  <dependencies>
+    <dependency>
+      <groupId>net.java.dev.jna</groupId>
+      <artifactId>jna</artifactId>
+      <version>5.1.0</version>
+    </dependency>
+    <dependency>
+      <groupId>net.java.dev.jna</groupId>
+      <artifactId>jna-platform</artifactId>
+      <version>5.1.0</version>
+    </dependency>
+
+    <dependency>
+        <groupId>com.itextpdf</groupId>
+        <artifactId>kernel</artifactId>
+        <version>${itext.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>com.itextpdf</groupId>
+        <artifactId>io</artifactId>
+        <version>${itext.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>com.itextpdf</groupId>
+        <artifactId>layout</artifactId>
+        <version>${itext.version}</version>
+    </dependency>
+
+  </dependencies>
+</project>
