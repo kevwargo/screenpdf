@@ -1,6 +1,13 @@
 package org.kevwargo.screenpdf;
 
 
+import com.itextpdf.io.image.ImageDataFactory;
+import com.itextpdf.kernel.geom.PageSize;
+import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.layout.Document;
+import com.itextpdf.layout.element.AreaBreak;
+import com.itextpdf.layout.element.Image;
 import com.sun.jna.Memory;
 import com.sun.jna.platform.win32.GDI32;
 import com.sun.jna.platform.win32.User32;
@@ -12,19 +19,23 @@ import com.sun.jna.platform.win32.WinGDI.BITMAPINFO;
 import com.sun.jna.platform.win32.WinGDI;
 import com.sun.jna.platform.win32.WinNT.HANDLE;
 import java.awt.CardLayout;
+import java.awt.Component;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import org.kevwargo.screenpdf.winextra.*;
 
 
-public class ScreenshotsPanel extends JPanel {
+public class ScreenshotsPanel extends JPanel implements ActionListener {
 
     private ScreenshotsFrame frame;
     private CardLayout cards;
@@ -58,10 +69,18 @@ public class ScreenshotsPanel extends JPanel {
                     gotoCard(currentCard - 1);
                 }
             });
+        JButton buttonSave = new JButton("Save");
+        buttonSave.setActionCommand("save");
+        buttonSave.addActionListener(this);
+        
         controlPanel.add(buttonPrev);
+        controlPanel.add(Box.createRigidArea(new Dimension(5,0)));
         controlPanel.add(cardsState);
+        controlPanel.add(Box.createRigidArea(new Dimension(5,0)));
         controlPanel.add(buttonNext);
-
+        controlPanel.add(Box.createRigidArea(new Dimension(15,0)));
+        controlPanel.add(buttonSave);
+        
         add(controlPanel);
         add(cardPanel);
     }
@@ -74,7 +93,8 @@ public class ScreenshotsPanel extends JPanel {
         }
         System.out.printf("setting current to %d\n", currentCard);
         String numString = Integer.toString(currentCard);
-        cardsState.setText(numString);
+        String numStringDisplay = Integer.toString(currentCard + 1);
+        cardsState.setText(numStringDisplay);
         cardsState.repaint();
         cards.show(cardPanel, numString);
         System.out.printf("panel :%fx%f\n", getSize().getWidth(), getSize().getHeight());
@@ -85,9 +105,46 @@ public class ScreenshotsPanel extends JPanel {
         if (image != null) {
             System.out.printf("Successfully captured: %dx%d\n", image.getWidth(), image.getHeight());
             int number = cardPanel.getComponents().length;
-            cardPanel.add(new JScrollPane(new ImagePanel(image)), Integer.toString(number));
+            cardPanel.add(new ImagePanel(image), Integer.toString(number));
             gotoCard(number);
             frame.setVisible(true);
+        }
+    }
+
+    public void actionPerformed(ActionEvent event) {
+        switch (event.getActionCommand()) {
+        case "save":
+            savePdf();
+            break;
+        }
+    }
+
+    private void savePdf() {
+        JFileChooser fc = new JFileChooser(frame.getOutputDir());
+        if (fc.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+            try {
+                String filename = fc.getSelectedFile().getAbsolutePath();
+                System.out.printf("Chosen output PDF file: %s\n", filename);
+                int pageCount = cardPanel.getComponents().length;
+                if (pageCount > 0) {
+                    PdfDocument pdfDoc = new PdfDocument(new PdfWriter(filename));
+                    ImagePanel first = (ImagePanel)cardPanel.getComponent(0);
+                    BufferedImage firstImage = first.getImage();
+                    Document doc = new Document(pdfDoc, new PageSize(firstImage.getWidth() / 2, firstImage.getHeight() / 2));
+                    doc.setMargins(0, 0, 0, 0);
+                    doc.add(new Image(ImageDataFactory.create(firstImage, null)));
+                    for (int i = 1; i < pageCount; i++) {
+                        ImagePanel panel = (ImagePanel)cardPanel.getComponent(i);
+                        BufferedImage image = panel.getImage();
+                        doc.add(new AreaBreak(new PageSize(image.getWidth() / 2, image.getHeight() / 2)));
+                        doc.add(new Image(ImageDataFactory.create(image, null)));
+                    }
+                    doc.close();
+                    
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 

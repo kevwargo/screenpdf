@@ -21,15 +21,35 @@ import java.awt.event.MouseAdapter;
 
 public class ScreenshotsFrame extends JFrame {
 
-    public ScreenshotsFrame() {
+    private String outputDir;
+
+
+    public ScreenshotsFrame(String outputDir) {
         super("ScreenPdf");
+
+        this.outputDir = outputDir;
         
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        ScreenshotsPanel panel = new ScreenshotsPanel(this, 620, 800);
+        final ScreenshotsPanel panel = new ScreenshotsPanel(this, 620, 800);
         setContentPane(new JScrollPane(panel));
         pack();
 
-        new HotKeyHandler(panel).start();
+        new Thread() {
+            public void run() {
+                final int HOTKEY_ID = 1;
+                if (User32.INSTANCE.RegisterHotKey(null, HOTKEY_ID, User32.MOD_CONTROL | User32.MOD_SHIFT, 0x47)) {
+                    System.out.println("HOTKEY REGISTER: success");
+                } else {
+                    System.out.println("HOTKEY REGISTER: fail");
+                }
+                MSG msg = new MSG();
+                while (User32.INSTANCE.GetMessage(msg, null, 0, 0) != 0) {
+                    if (msg.message == User32.WM_HOTKEY && msg.wParam.longValue() == HOTKEY_ID) {
+                        panel.hotKeyPressed();
+                    }
+                }
+            }
+        }.start();
 
         if (SystemTray.isSupported()) {
             SystemTray tray = SystemTray.getSystemTray();
@@ -41,8 +61,12 @@ public class ScreenshotsFrame extends JFrame {
                 e.printStackTrace();
             }
         } else {
-            System.out.println("Tray is not supported");
+            System.err.println("Tray is not supported");
         }
+    }
+
+    public String getOutputDir() {
+        return outputDir;
     }
 
     private TrayIcon createTrayIcon(PopupMenu popup) throws IOException {
@@ -85,31 +109,6 @@ public class ScreenshotsFrame extends JFrame {
             });
 
         return popup;
-    }
-
-    private class HotKeyHandler extends Thread {
-
-        private ScreenshotsPanel panel;
-        private static final int HOTKEY_ID = 1;
-
-        public HotKeyHandler(ScreenshotsPanel panel) {
-            this.panel = panel;
-        }
-
-        public void run() {
-            if (User32.INSTANCE.RegisterHotKey(null, HOTKEY_ID, User32.MOD_CONTROL | User32.MOD_SHIFT, 0x47)) {
-                System.out.println("HOTKEY REGISTER: success");
-            } else {
-                System.out.println("HOTKEY REGISTER: fail");
-            }
-            MSG msg = new MSG();
-            while (User32.INSTANCE.GetMessage(msg, null, 0, 0) != 0) {
-                if (msg.message == User32.WM_HOTKEY && msg.wParam.longValue() == HOTKEY_ID) {
-                    panel.hotKeyPressed();
-                }
-            }
-        }
-
     }
 
 }

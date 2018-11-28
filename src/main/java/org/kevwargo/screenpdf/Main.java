@@ -8,10 +8,10 @@ import javax.swing.SwingUtilities;
 
 public class Main extends JFrame {
 
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-                new ScreenshotsFrame();
+                new ScreenshotsFrame(args.length > 0 ? args[0] : null);
             }
         });
     }
