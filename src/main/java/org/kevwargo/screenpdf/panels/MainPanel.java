@@ -1,4 +1,4 @@
-package org.kevwargo.screenpdf;
+package org.kevwargo.screenpdf.panels;
 
 
 import com.itextpdf.io.image.ImageDataFactory;
@@ -18,40 +18,64 @@ import com.sun.jna.platform.win32.WinDef.RECT;
 import com.sun.jna.platform.win32.WinGDI.BITMAPINFO;
 import com.sun.jna.platform.win32.WinGDI;
 import com.sun.jna.platform.win32.WinNT.HANDLE;
+import java.awt.BorderLayout;
 import java.awt.CardLayout;
-import java.awt.Component;
-import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
-import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
+import org.kevwargo.screenpdf.MainFrame;
 import org.kevwargo.screenpdf.winextra.*;
 
 
-public class ScreenshotsPanel extends JPanel implements ActionListener {
 
-    private ScreenshotsFrame frame;
+public class MainPanel extends JPanel implements ActionListener {
+
+    private MainFrame frame;
     private CardLayout cards;
+    private JPanel controlPanel;
     private JPanel cardPanel;
-    private JLabel cardsState;
     private int currentCard;
+    private JLabel cardsState;
 
 
-    public ScreenshotsPanel(ScreenshotsFrame frame, int w, int h) {
+    public MainPanel(MainFrame frame, int width, int height) {
         this.frame = frame;
-        setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-        setPreferredSize(new Dimension(w, h));
+        // setPreferredSize(new Dimension(width, height));
+        // setLayout(new GridBagLayout());
+        setLayout(new BorderLayout());
 
         cards = new CardLayout();
         cardPanel = new JPanel(cards);
 
+        controlPanel = createControlPanel();
+
+        // GridBagConstraints c = new GridBagConstraints();
+
+        // c.fill = GridBagConstraints.HORIZONTAL;
+        // c.weightx = 1;
+        // c.gridwidth = 3;
+        // c.gridx = 0;
+        // c.gridy = 0;
+        // add(controlPanel, c);
+
+        // c.gridy = 1;
+        // c.gridwidth = 1;
+        // c.gridx = 1;
+        // add(cardPanel, c);
+        add(controlPanel, BorderLayout.NORTH);
+        add(cardPanel, BorderLayout.CENTER);
+    }
+
+    private JPanel createControlPanel() {
         JPanel controlPanel = new JPanel();
         controlPanel.setLayout(new BoxLayout(controlPanel, BoxLayout.X_AXIS));
 
@@ -66,25 +90,23 @@ public class ScreenshotsPanel extends JPanel implements ActionListener {
         JButton buttonPrev = new JButton("<");
         buttonPrev.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent event) {
-                    gotoCard(currentCard - 1);
+                    gotoCard(currentCard + 1);
                 }
             });
         JButton buttonSave = new JButton("Save");
         buttonSave.setActionCommand("save");
         buttonSave.addActionListener(this);
-        
-        controlPanel.add(buttonPrev);
-        controlPanel.add(Box.createRigidArea(new Dimension(5,0)));
-        controlPanel.add(cardsState);
-        controlPanel.add(Box.createRigidArea(new Dimension(5,0)));
-        controlPanel.add(buttonNext);
-        controlPanel.add(Box.createRigidArea(new Dimension(15,0)));
-        controlPanel.add(buttonSave);
-        
-        add(controlPanel);
-        add(cardPanel);
-    }
 
+        controlPanel.add(buttonSave);
+        controlPanel.add(buttonPrev);
+        controlPanel.add(cardsState);
+        controlPanel.add(buttonNext);
+
+        System.out.printf("control %d:%d\n", controlPanel.getWidth(), controlPanel.getHeight());
+
+        return controlPanel;
+    }
+    
     public void gotoCard(int num) {
         int cardCount = cardPanel.getComponents().length;
         currentCard = num % cardCount;
@@ -97,16 +119,23 @@ public class ScreenshotsPanel extends JPanel implements ActionListener {
         cardsState.setText(numStringDisplay);
         cardsState.repaint();
         cards.show(cardPanel, numString);
-        System.out.printf("panel :%fx%f\n", getSize().getWidth(), getSize().getHeight());
+        revalidate();
+        System.out.printf("panel: %d:%d\n", getWidth(), getHeight());
     }
 
-    public void hotKeyPressed() {
+    public void imageClicked(Point point) {
+        System.out.printf("Image clicked at %f:%f\n", point.getX(), point.getY());
+    }
+    
+    public void newScreenShot() {
         BufferedImage image = captureActiveWindow();
         if (image != null) {
             System.out.printf("Successfully captured: %dx%d\n", image.getWidth(), image.getHeight());
             int number = cardPanel.getComponents().length;
-            cardPanel.add(new ImagePanel(image), Integer.toString(number));
+            cardPanel.add(new ImagePanel(image, this), Integer.toString(number));
             gotoCard(number);
+
+            frame.pack();
             frame.setVisible(true);
         }
     }
@@ -129,18 +158,17 @@ public class ScreenshotsPanel extends JPanel implements ActionListener {
                 if (pageCount > 0) {
                     PdfDocument pdfDoc = new PdfDocument(new PdfWriter(filename));
                     ImagePanel first = (ImagePanel)cardPanel.getComponent(0);
-                    BufferedImage firstImage = first.getImage();
-                    Document doc = new Document(pdfDoc, new PageSize(firstImage.getWidth() / 2, firstImage.getHeight() / 2));
+                    BufferedImage image = first.getImage();
+                    Document doc = new Document(pdfDoc, new PageSize(image.getWidth() / 2, image.getHeight() / 2));
                     doc.setMargins(0, 0, 0, 0);
-                    doc.add(new Image(ImageDataFactory.create(firstImage, null)));
+                    doc.add(new Image(ImageDataFactory.create(image, null)));
                     for (int i = 1; i < pageCount; i++) {
                         ImagePanel panel = (ImagePanel)cardPanel.getComponent(i);
-                        BufferedImage image = panel.getImage();
+                        image = panel.getImage();
                         doc.add(new AreaBreak(new PageSize(image.getWidth() / 2, image.getHeight() / 2)));
                         doc.add(new Image(ImageDataFactory.create(image, null)));
                     }
                     doc.close();
-                    
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -189,5 +217,6 @@ public class ScreenshotsPanel extends JPanel implements ActionListener {
 
         return image;
     }
+
 
 }

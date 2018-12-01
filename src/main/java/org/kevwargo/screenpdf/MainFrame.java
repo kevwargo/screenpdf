@@ -1,39 +1,52 @@
 package org.kevwargo.screenpdf;
 
-
 import com.sun.jna.platform.win32.User32;
 import com.sun.jna.platform.win32.WinUser.MSG;
+import java.awt.AWTEvent;
 import java.awt.AWTException;
 import java.awt.Image;
 import java.awt.MenuItem;
 import java.awt.PopupMenu;
 import java.awt.SystemTray;
+import java.awt.Toolkit;
 import java.awt.TrayIcon;
+import java.awt.event.AWTEventListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.IOException;
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseAdapter;
+import org.kevwargo.screenpdf.panels.MainPanel;
 
 
-public class ScreenshotsFrame extends JFrame {
+public class MainFrame extends JFrame {
 
     private String outputDir;
+    private MainPanel panel;
 
 
-    public ScreenshotsFrame(String outputDir) {
-        super("ScreenPdf");
+    public MainFrame(String outputDir) {
+        super("ScreenPDF");
 
         this.outputDir = outputDir;
         
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        final ScreenshotsPanel panel = new ScreenshotsPanel(this, 620, 800);
+        panel = new MainPanel(this, 800, 600);
         setContentPane(new JScrollPane(panel));
         pack();
 
+        startHotKeyThread();
+        initSystemTray();
+    }
+
+    public String getOutputDir() {
+        return outputDir;
+    }
+
+    private void startHotKeyThread() {
         new Thread() {
             public void run() {
                 final int HOTKEY_ID = 1;
@@ -45,12 +58,14 @@ public class ScreenshotsFrame extends JFrame {
                 MSG msg = new MSG();
                 while (User32.INSTANCE.GetMessage(msg, null, 0, 0) != 0) {
                     if (msg.message == User32.WM_HOTKEY && msg.wParam.longValue() == HOTKEY_ID) {
-                        panel.hotKeyPressed();
+                        panel.newScreenShot();
                     }
                 }
             }
-        }.start();
+        }.start();        
+    }
 
+    private void initSystemTray() {
         if (SystemTray.isSupported()) {
             SystemTray tray = SystemTray.getSystemTray();
             PopupMenu popup = createTrayPopupMenu();
@@ -63,10 +78,6 @@ public class ScreenshotsFrame extends JFrame {
         } else {
             System.err.println("Tray is not supported");
         }
-    }
-
-    public String getOutputDir() {
-        return outputDir;
     }
 
     private TrayIcon createTrayIcon(PopupMenu popup) throws IOException {
@@ -83,25 +94,23 @@ public class ScreenshotsFrame extends JFrame {
 
     private PopupMenu createTrayPopupMenu() {
         PopupMenu popup = new PopupMenu();
-        MenuItem item1 = new MenuItem("Hide");
-        MenuItem item2 = new MenuItem("Show");
-        MenuItem item3 = new MenuItem("Exit");
-        popup.add(item1);
-        popup.add(item2);
-        popup.add(item3);
-        item1.addActionListener(new ActionListener() {
+        MenuItem hideItem = new MenuItem("Hide");
+        MenuItem showItem = new MenuItem("Show");
+        MenuItem exitItem = new MenuItem("Exit");
+        popup.add(hideItem);
+        popup.add(showItem);
+        popup.add(exitItem);
+        hideItem.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
-                    System.out.println("Item 1 clicked");
-                    ScreenshotsFrame.this.setVisible(false);
+                    MainFrame.this.setVisible(false);
                 }
             });
-        item2.addActionListener(new ActionListener() {
+        showItem.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
-                    System.out.println("Item 2 clicked");
-                    ScreenshotsFrame.this.setVisible(true);
+                    MainFrame.this.setVisible(true);
                 }
             });
-        item3.addActionListener(new ActionListener() {
+        exitItem.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
                     System.out.println("Quitting");
                     System.exit(0);

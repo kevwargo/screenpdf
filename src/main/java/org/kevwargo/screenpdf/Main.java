@@ -11,7 +11,7 @@ public class Main extends JFrame {
     public static void main(final String[] args) {
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-                new ScreenshotsFrame(args.length > 0 ? args[0] : null);
+                new MainFrame(args.length > 0 ? args[0] : null);
             }
         });
     }
